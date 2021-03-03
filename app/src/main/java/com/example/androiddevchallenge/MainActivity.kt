@@ -21,15 +21,15 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -47,6 +48,7 @@ import com.example.androiddevchallenge.ui.page.DogInfoPage
 import com.example.androiddevchallenge.ui.page.HOME_PAGE
 import com.example.androiddevchallenge.ui.page.HomePage
 import com.example.androiddevchallenge.ui.theme.MyTheme
+import com.example.androiddevchallenge.viewmodel.DogViewModel
 
 class MainActivity : AppCompatActivity() {
     @ExperimentalFoundationApi
@@ -68,43 +70,55 @@ class MainActivity : AppCompatActivity() {
 fun MyApp() {
     val navController = rememberNavController()
     var canBack by mutableStateOf(false)
+    val viewModel: DogViewModel = viewModel()
+    val title by viewModel.title.collectAsState()
     Scaffold(
         topBar = {
-            TopAppBar(title = {
-                Text(
-                    text = stringResource(id = R.string.app_name)
-                )
-            }, navigationIcon = {
-                Icon(
-                    painter = painterResource(
-                        id = if (canBack) R.drawable.ic_arrow_back
-                        else R.drawable.ic_home
-                    ),
-                    contentDescription = DOG_INFO_PAGE,
-                    modifier = Modifier.padding(8.dp).size(32.dp).clickable {
-                        if (canBack) navController.popBackStack()
+            TopAppBar(
+                title = {
+                    Text(
+                        text = if (canBack) title else stringResource(id = R.string.app_name)
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            if (canBack) navController.navigateUp()
+                        },
+                        enabled = canBack
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                id = if (canBack) R.drawable.ic_arrow_back
+                                else R.drawable.ic_home
+                            ),
+                            contentDescription = DOG_INFO_PAGE,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .size(28.dp)
+
+                        )
                     }
-                )
-            }
+                }
             )
         },
     ) {
         NavHost(navController = navController, startDestination = HOME_PAGE) {
-            composable(HOME_PAGE) { HomePage(navController) }
+            composable(HOME_PAGE) { HomePage(viewModel, navController) }
             composable(
                 "$DOG_INFO_PAGE/{position}",
                 arguments = listOf(navArgument("position") { type = NavType.IntType })
             ) {
                 DogInfoPage(
+                    viewModel,
                     navController,
-                    it.arguments?.getInt("position") ?: -1,
-//                    it.arguments?.getParcelable("dog")!!
+                    it.arguments?.getInt("position") ?: -1
                 )
             }
         }
     }
     navController.addOnDestinationChangedListener { controller, _, _ ->
-        canBack = controller.backStack.size>2
+        canBack = controller.backStack.size > 2
         Log.d("My", "MyApp: ${controller.backStack.size}")
     }
 }
