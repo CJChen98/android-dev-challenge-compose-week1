@@ -73,11 +73,9 @@ fun HomePage(viewModel: DogViewModel, navController: NavHostController) {
             }
     ) {
         itemsIndexed(dogs) { position, dog ->
-            if (!dog.adopted) {
-                DogListItem(item = dog) {
-                    navController.navigate("$DOG_INFO_PAGE/$position")
-                    viewModel.setTitle(title = dog.name)
-                }
+            DogListItem(item = dog) {
+                navController.navigate("$DOG_INFO_PAGE/$position")
+                viewModel.setTitle(title = dog.name)
             }
         }
     }
@@ -115,7 +113,8 @@ fun DogListItem(item: Dog, onClick: () -> Unit) {
                     contentDescription = item.name,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(60.dp).clip(MaterialTheme.shapes.medium)
+                        .size(60.dp)
+                        .clip(MaterialTheme.shapes.medium)
                 )
                 Text(
                     text = item.name,
